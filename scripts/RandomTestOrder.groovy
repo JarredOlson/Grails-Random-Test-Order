@@ -48,7 +48,7 @@ target(main: "Runs Unit and Integration tests in random order") {
         createTestReports = !argsMap["no-reports"]
     }
 
-    //TODO: JARRED'S STUFF
+    //Random Test Order Stuff
     testNames = []
     if(argsMap["rerun"]) {
         println "rerunning last order of tests"
