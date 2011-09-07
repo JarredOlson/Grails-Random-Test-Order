@@ -10,13 +10,13 @@ class RandomTestOrderGrailsPlugin {
             "grails-app/views/error.gsp"
     ]
 
-    // TODO Fill in these fields
-    def author = "Your name"
+    def author = "Jarred Olson (Twitter: @JarredOlson)"
     def authorEmail = ""
-    def title = "Plugin summary/headline"
-    def description = '''\\
-Brief description of the plugin.
-'''
+    def title = "Random Test Order"
+    def description = '''
+        Allows you to run your unit and integration tests in a random order.
+        This is helpful when trying to identify tests that rely on data or setup from another test.
+    '''
 
     // URL to the plugin's documentation
     def documentation = "http://grails.org/plugin/random-test-order"
