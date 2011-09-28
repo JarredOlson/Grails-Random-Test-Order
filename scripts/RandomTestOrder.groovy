@@ -5,6 +5,9 @@ includeTargets << grailsScript("_GrailsTest")
 
 TEST_PHASE_AND_TYPE_SEPARATOR = ':'
 RANDOM_TEST_NAME_PATH = "${randomTestOrderPluginDir}/target/RandomTestNames.txt"
+INTEGRATION_TEST_TYPE = "integration"
+UNIT_TEST_TYPE = "unit"
+FUNCTIONAL_TEST_TYPE = "functional"
 
 target(main: "Runs Unit and Integration tests in random order") {
     depends(checkVersion, configureProxy, parseArguments, cleanTestReports)
@@ -51,20 +54,29 @@ target(main: "Runs Unit and Integration tests in random order") {
     //Random Test Order Stuff
     testNames = []
     if(argsMap["rerun"]) {
-        println "rerunning last order of tests"
+        println "\n\n"
+        println "Rerunning last order of tests"
+        println "\n\n"
         testNames = readTestNamesFromFile()
     } else {
         println "\n"
-        if (isUnitTest()) {
-            def randomizedTestNames = getTestNamesInRandomOrderForUnitTests()
-            def command = getTestCommandAboutToExecuteForTestTypeAndNames("unit", randomizedTestNames)
+        if (isTestType(UNIT_TEST_TYPE)) {
+            def randomizedTestNames = getTestNamesInRandomOrderForTestType(UNIT_TEST_TYPE)
+            def command = getTestCommandAboutToExecuteForTestTypeAndNames(UNIT_TEST_TYPE, randomizedTestNames)
             printCommand(command)
             testNames.addAll(randomizedTestNames)
         }
 
-        if (isIntegrationTest()) {
-            def randomizedTestNames = getTestNamesInRandomOrderForIntegrationTests()
-            def command = getTestCommandAboutToExecuteForTestTypeAndNames("integration", randomizedTestNames)
+        if (isTestType(INTEGRATION_TEST_TYPE)) {
+            def randomizedTestNames = getTestNamesInRandomOrderForTestType(INTEGRATION_TEST_TYPE)
+            def command = getTestCommandAboutToExecuteForTestTypeAndNames(INTEGRATION_TEST_TYPE, randomizedTestNames)
+            printCommand(command)
+            testNames.addAll(randomizedTestNames)
+        }
+
+        if(isTestType(FUNCTIONAL_TEST_TYPE)) {
+            def randomizedTestNames = getTestNamesInRandomOrderForFunctionalTests()
+            def command = getTestCommandAboutToExecuteForTestTypeAndNames(FUNCTIONAL_TEST_TYPE, randomizedTestNames)
             printCommand(command)
             testNames.addAll(randomizedTestNames)
         }
@@ -102,39 +114,33 @@ def getArgsAsString() {
     new String(this.binding.args.bytes)
 }
 
-def isUnitTest() {
-    getArgsAsString().contains("-unit")
-}
-
-def isIntegrationTest() {
-    getArgsAsString().contains("-integration")
+def isTestType(testType) {
+    getArgsAsString().contains("-${testType}")
 }
 
 def getTestCommandAboutToExecuteForTestTypeAndNames(testType, randomizedTestNames) {
     "grails test-app -${testType} " + randomizedTestNames.join(' ')
 }
 
-def getTestNamesInRandomOrderForIntegrationTests() {
-    def testType = "integration"
+def getTestNamesInRandomOrderForTestType(testType) {
     def files = getAllTestNames(testType)
-    getFileListForTestTypeFromFileNames(testType, files)
+    getFileListForTestTypeFromFileNames(files)
 }
 
-def getTestNamesInRandomOrderForUnitTests() {
-    def testType = "unit"
-    def files = getAllTestNames(testType)
-    getFileListForTestTypeFromFileNames(testType, files)
+def getTestNamesInRandomOrderForFunctionalTests() {
+    def files = getAllTestNamesForFunctionalTests()
+    getFileListForTestTypeFromFileNames(files)
 }
 
-def getFileListForTestTypeFromFileNames(testType, files) {
+def getFileListForTestTypeFromFileNames(files) {
     files = files.collect {it.substring(0, it.indexOf('.'))}
     Collections.shuffle(files)
     files
 }
 
 def getAllTestNames(testType) {
-    def testFolder = "${getApplicationRootDirectory()}/test/${testType}"
-    getAllFilePathsInDirectory(testFolder)
+    def directory = "${getApplicationRootDirectory()}/test/${testType}"
+    getAllFilePathsInDirectory(directory)
 }
 
 def getAllFilePathsInDirectory(directory) {
@@ -155,9 +161,36 @@ def addFilePathsToList(directory, fileList) {
     }
 }
 
+//Functional
+def getAllTestNamesForFunctionalTests() {
+    def directory = "${getApplicationRootDirectory()}/test"
+    getAllFilePathsInDirectoryForFunctionalTests(directory)
+}
+
+def getAllFilePathsInDirectoryForFunctionalTests(directory) {
+    def fileList = []
+    addFilePathsToListForFunctionalTests(directory, fileList)
+    fileList
+}
+
+def addFilePathsToListForFunctionalTests(directory, fileList) {
+    File rootDirectory = new File(directory)
+    rootDirectory.eachFile() { file ->
+        if (file.directory && shouldUseDirectoryForFunctionalTests(file.name)) {
+            addFilePathsToList(file.path, fileList)
+        }
+        if (shouldAddFileToList(file)) {
+            fileList << file.name
+        }
+    }
+}
+
+def shouldUseDirectoryForFunctionalTests(directoryName) {
+    !["unit", "integration"].contains(directoryName.toLowerCase())
+}
+
 def shouldAddFileToList(file) {
     def upperFileName = file.name.toUpperCase()
-    //TODO: Switch to regex
     !upperFileName.startsWith(".") && (upperFileName.endsWith("TESTS.GROOVY") || upperFileName.endsWith("TEST.GROOVY"))
 }
 
@@ -168,14 +201,6 @@ def getApplicationRootDirectory() {
 def flipBackSlashesToForwardSlashes(String str) {
     if (str == null) {return null}
     str.replaceAll('\\\\', '/')
-}
-
-def getApplicationUnitTestDirectory() {
-    getApplicationRootDirectory() + "/test/unit"
-}
-
-def getApplicationIntegrationTestDirectory() {
-    getApplicationRootDirectory() + "/test/integration"
 }
 
 setDefaultTarget(main)
