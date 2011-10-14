@@ -161,7 +161,6 @@ def addFilePathsToList(directory, fileList) {
     }
 }
 
-//Functional
 def getAllTestNamesForFunctionalTests() {
     def directory = "${getApplicationRootDirectory()}/test"
     getAllFilePathsInDirectoryForFunctionalTests(directory)
