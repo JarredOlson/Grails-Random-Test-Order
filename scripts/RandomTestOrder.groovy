@@ -25,6 +25,8 @@ target(main: "Runs Unit and Integration tests in random order") {
         }
     }
 
+   println "argsMap: ${argsMap}"
+
     // treat pre 1.2 phase targeting args as '¬´phase¬ª:' for backwards compatibility
     ["unit", "integration", "functional", "other"].each {
         if (argsMap[it]) {
@@ -51,57 +53,53 @@ target(main: "Runs Unit and Integration tests in random order") {
         createTestReports = !argsMap["no-reports"]
     }
 
-    //Random Test Order Stuff
-    testNames = []
-    if(argsMap["rerun"]) {
-        println "\n\n"
-        println "Rerunning last order of tests"
-        println "\n\n"
-        testNames = readTestNamesFromFile()
-    } else {
-        println "\n"
-        if (isTestType(UNIT_TEST_TYPE)) {
-            def randomizedTestNames = getTestNamesInRandomOrderForTestType(UNIT_TEST_TYPE)
-            def command = getTestCommandAboutToExecuteForTestTypeAndNames(UNIT_TEST_TYPE, randomizedTestNames)
-            printCommand(command)
-            testNames.addAll(randomizedTestNames)
-        }
+    def seed
 
-        if (isTestType(INTEGRATION_TEST_TYPE)) {
-            def randomizedTestNames = getTestNamesInRandomOrderForTestType(INTEGRATION_TEST_TYPE)
-            def command = getTestCommandAboutToExecuteForTestTypeAndNames(INTEGRATION_TEST_TYPE, randomizedTestNames)
-            printCommand(command)
-            testNames.addAll(randomizedTestNames)
-        }
-
-        if(isTestType(FUNCTIONAL_TEST_TYPE)) {
-            def randomizedTestNames = getTestNamesInRandomOrderForFunctionalTests()
-            def command = getTestCommandAboutToExecuteForTestTypeAndNames(FUNCTIONAL_TEST_TYPE, randomizedTestNames)
-            printCommand(command)
-            testNames.addAll(randomizedTestNames)
-        }
+    if (argsMap["seed"] && argsMap["params"]) {
+       try {
+          seed = new Long(argsMap["params"][0])
+       }
+       catch (Exception e) {}
     }
 
-    writeTestNamesToFile(testNames)
+
+    def random = getRandom(seed)
+
+    //Random Test Order Stuff
+    testNames = []
+
+     println "\n"
+     if (isTestType(UNIT_TEST_TYPE)) {
+         def randomizedTestNames = getTestNamesInRandomOrderForTestType(UNIT_TEST_TYPE, random)
+         def command = getTestCommandAboutToExecuteForTestTypeAndNames(UNIT_TEST_TYPE, randomizedTestNames)
+         printCommand(command)
+         testNames.addAll(randomizedTestNames)
+     }
+
+     if (isTestType(INTEGRATION_TEST_TYPE)) {
+         def randomizedTestNames = getTestNamesInRandomOrderForTestType(INTEGRATION_TEST_TYPE, random)
+         def command = getTestCommandAboutToExecuteForTestTypeAndNames(INTEGRATION_TEST_TYPE, randomizedTestNames)
+         printCommand(command)
+         testNames.addAll(randomizedTestNames)
+     }
+
+     if(isTestType(FUNCTIONAL_TEST_TYPE)) {
+         def randomizedTestNames = getTestNamesInRandomOrderForFunctionalTests(random)
+         def command = getTestCommandAboutToExecuteForTestTypeAndNames(FUNCTIONAL_TEST_TYPE, randomizedTestNames)
+         printCommand(command)
+         testNames.addAll(randomizedTestNames)
+     }
 
     allTests()
 }
 
-def writeTestNamesToFile(testNames) {
-    File file = new File(RANDOM_TEST_NAME_PATH)
-    file.setText("")
-    testNames.each {
-        file.append(it + "\n")
-    }
-}
+def getRandom(seed) {
 
-def readTestNamesFromFile() {
-    File file = new File(RANDOM_TEST_NAME_PATH)
-    def testNames = []
-    file.eachLine {
-        testNames << it
-    }
-    testNames
+   if (!seed) {
+      seed = new Date().getTime()
+   }
+   println "Seed used: ${seed}"
+   new Random(seed)
 }
 
 def printCommand(command) {
@@ -122,19 +120,20 @@ def getTestCommandAboutToExecuteForTestTypeAndNames(testType, randomizedTestName
     "grails test-app -${testType} " + randomizedTestNames.join(' ')
 }
 
-def getTestNamesInRandomOrderForTestType(testType) {
+def getTestNamesInRandomOrderForTestType(testType, random) {
     def files = getAllTestNames(testType)
-    getFileListForTestTypeFromFileNames(files)
+    getFileListForTestTypeFromFileNames(files, random)
 }
 
-def getTestNamesInRandomOrderForFunctionalTests() {
+def getTestNamesInRandomOrderForFunctionalTests(random) {
     def files = getAllTestNamesForFunctionalTests()
-    getFileListForTestTypeFromFileNames(files)
+    getFileListForTestTypeFromFileNames(files, random)
 }
 
-def getFileListForTestTypeFromFileNames(files) {
+def getFileListForTestTypeFromFileNames(files, random) {
     files = files.collect {it.substring(0, it.indexOf('.'))}
-    Collections.shuffle(files)
+
+    Collections.shuffle(files, random)
     files
 }
 
