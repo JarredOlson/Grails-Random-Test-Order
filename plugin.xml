@@ -1,4 +1,4 @@
-<plugin name='random-test-order' version='0.2' grailsVersion='1.3.7 &gt; *'>
+<plugin name='random-test-order' version='0.3' grailsVersion='1.3.7 &gt; *'>
   <author>Jarred Olson (Twitter: @JarredOlson)</author>
   <title>Random Test Order - Allows you to run your tests in a random order</title>
   <description>
