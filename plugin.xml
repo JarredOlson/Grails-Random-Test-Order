@@ -1,22 +1,22 @@
-<plugin name='random-test-order' version='0.1' grailsVersion='1.3.7 &gt; *'>
+<plugin name='random-test-order' version='0.2' grailsVersion='1.3.7 &gt; *'>
   <author>Jarred Olson (Twitter: @JarredOlson)</author>
   <title>Random Test Order - Allows you to run your tests in a random order</title>
   <description>
         Allows you to run your unit, integration, and functional tests in a random order.
         This is helpful when trying to identify tests that rely on data or setup from another test.
 
-        {code}grails random-test-order [test type] [rerun]{code}
+        {code}grails random-test-order [test type] [seed]{code}
 
         [test type]
             -unit
             -integration
             -functional
-        [rerun]
-            -rerun
+        [seed]
+            -seed
 
         examples:
-            grails random-test-order -unit             //will run all unit tests in a random order
-            grails random-test-order -unit -rerun      //will rerun all unit tests in the previous random order
+            {code}grails random-test-order -unit{code}             //will run all unit tests in a random order
+            {code}grails random-test-order -unit -seed 1399148896295{code}      //will run all unit test in a consistent random order based on given seed value
 
 
         When you execute the script you will see output like the following:
@@ -24,16 +24,8 @@
         About to execute the following test app script...
         grails test-app -unit UnitBTests UnitCTests UnitATests
 
-        This will allow you to copy/paste the outputted command in order to re-run your tests in the same order
-        that they previously occurred on another machine.
     </description>
   <documentation>http://grails.org/plugin/random-test-order</documentation>
-  <resources>
-    <resource>BuildConfig</resource>
-    <resource>Config</resource>
-    <resource>DataSource</resource>
-    <resource>UrlMappings</resource>
-  </resources>
-  <dependencies />
-  <behavior />
+  <type>RandomTestOrderGrailsPlugin</type>
+  <resources />
 </plugin>

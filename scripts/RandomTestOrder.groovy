@@ -4,7 +4,6 @@ includeTargets << grailsScript("_GrailsClean")
 includeTargets << grailsScript("_GrailsTest")
 
 TEST_PHASE_AND_TYPE_SEPARATOR = ':'
-RANDOM_TEST_NAME_PATH = "${randomTestOrderPluginDir}/target/RandomTestNames.txt"
 INTEGRATION_TEST_TYPE = "integration"
 UNIT_TEST_TYPE = "unit"
 FUNCTIONAL_TEST_TYPE = "functional"
@@ -18,14 +17,11 @@ target(main: "Runs Unit and Integration tests in random order") {
     // The params that target a phase and/or type
     def phaseAndTypeTargeters = []
 
-
     argsMap.each {
         if (it.key != 'params') {
             testOptions[it.key] = it.value
         }
     }
-
-   println "argsMap: ${argsMap}"
 
     // treat pre 1.2 phase targeting args as '¬´phase¬ª:' for backwards compatibility
     ["unit", "integration", "functional", "other"].each {
